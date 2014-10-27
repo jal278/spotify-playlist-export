@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Simple Playlist Exporter</title>
+  
+  
+  
+      <script type='text/javascript' src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+    
+  
+    
+      <script type='text/javascript' src="http://cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
+   
+<script type="text/javascript" src="swfobject.js"></script>
+		<script type="text/javascript" src="downloadify.min.js"></script> 
+  
+    
+      <link rel="stylesheet" type="text/css" href="https://d2c87l0yth4zbw.cloudfront.net/css/80278a9.css">
+    
+  
+  <style type='text/css'>
+    body {
+    padding: 20px;
+}
+
+#playlists-list {
+    width: 30%;
+}
+
+#playlist-detail {
+    width: 65%;
+}
+#playlist-detail, #playlists-list {
+    float: left;
+}
+
+.cover {
+    width: 300px;
+    height: 300px;
+    background-size: cover;
+}
+
+td, th {
+    padding: 3px 10px;
+}
+tr {
+    border-bottom: 1px solid #ddd;
+}
+  </style>
+  
+
+
+<script type='text/javascript'>//<![CDATA[ 
+
+
+var cached_data;
+function save_csv() {
+ Downloadify.create("download",{
+    swf:'downloadify.swf',
+    downloadImage:'download.png', 
+    width: 100,
+    height: 30,
+    transparent: true,
+    append: false,
+    filename: 'playlist.csv',
+    data: $("#output").val(),
+    });
+}
+
+window.onload=function(){
+// find template and compile it
+var playlistsListTemplateSource = document.getElementById('playlists-list-template').innerHTML,
+    playlistsListTemplate = Handlebars.compile(playlistsListTemplateSource),
+    playlistsListPlaceholder = document.getElementById('playlists-list'),
+    csvTemplateSource= document.getElementById('csv-template').innerHTML,
+    csvTemplate = Handlebars.compile(csvTemplateSource),
+    
+    playlistDetailTemplateSource = document.getElementById('playlist-detail-template').innerHTML,
+    playlistDetailTemplate = Handlebars.compile(playlistDetailTemplateSource),
+    playlistDetailPlaceholder = document.getElementById('playlist-detail')
+
+document.getElementById('login').addEventListener('click', function() {
+    login();
+});
+
+
+function login() {
+    var width = 400,
+        height = 500;
+    var left = (screen.width / 2) - (width / 2);
+    var top = (screen.height / 2) - (height / 2);
+    
+    var params = {
+        client_id:'1bef8ed75fcd45b08c250c232a79361a',
+        redirect_uri: 'http://joellehman.com/playlist/show.html',
+        scope: 'playlist-read playlist-read-private',
+        response_type: 'token'
+    };
+    authWindow = window.open(
+        "https://accounts.spotify.com/authorize?" + toQueryString(params),
+        "Spotify",
+        'menubar=no,location=no,resizable=no,scrollbars=no,status=no, width=' + width + ', height=' + height + ', top=' + top + ', left=' + left
+    );
+}
+
+function receiveMessage(event){
+    if (event.origin !== "http://joellehman.com") {
+        return;
+    }
+    if (authWindow) {
+        authWindow.close();
+    }
+    showInfo(event.data);
+}
+
+window.addEventListener("message", receiveMessage, false);
+
+function toQueryString(obj) {
+    var parts = [];
+    for (var i in obj) {
+        if (obj.hasOwnProperty(i)) {
+            parts.push(encodeURIComponent(i) + "=" + encodeURIComponent(obj[i]));
+        }
+    }
+    return parts.join("&");
+}
+var authWindow = null;
+
+var token = null;
+
+
+function showInfo(accessToken) {
+    token = accessToken;
+    // fetch my public playlists
+    $.ajax({
+        url: 'https://api.spotify.com/v1/me',
+        headers: {
+            'Authorization': 'Bearer ' + accessToken
+        },
+        success: function(response) {         
+            var user_id = response.id.toLowerCase();         
+            $.ajax({
+                url: 'https://api.spotify.com/v1/users/' + user_id + '/playlists',
+                headers: {
+                    'Authorization': 'Bearer ' + accessToken
+                },
+                success: function(response) {
+                    console.log("RESPONSE:"+JSON.stringify(response.items));
+
+                     //temp fix for strange null hrefs on items
+                     for (var item in response.items) {
+                       item=response.items[item]; 
+                       console.log(JSON.stringify(item));
+                       item['href']=item['tracks']['href'].slice(0,-6)
+                     }
+ 
+                    playlistsListPlaceholder.innerHTML = playlistsListTemplate(response.items);
+                }
+            });
+         
+            $('div#login').hide();
+            $('div#loggedin').show();
+        }
+    });
+}
+
+playlistsListPlaceholder.addEventListener('click', function(e) {
+    var target = e.target;
+    if (target !== null && target.classList.contains('load')) {
+        e.preventDefault();
+        var link = target.getAttribute('data-link');
+               
+        $.ajax({
+            url: link,
+            headers: {
+                'Authorization': 'Bearer ' + token
+            },
+            success: function(response) {
+                console.log(response);
+                cached_data=response;
+                playlistDetailPlaceholder.innerHTML = playlistDetailTemplate(response);
+                $('textarea#output').val(csvTemplate(response));
+            }
+        });
+    }
+});
+
+playlistDetailPlaceholder.addEventListener('click', function(e) {
+    var target = e.target;
+    if (target !== null && target.classList.contains('load')) {
+        e.preventDefault();
+        var link = target.getAttribute('data-link');
+               
+        $.ajax({
+            url: link,
+            headers: {
+                'Authorization': 'Bearer ' + token
+            },
+            success: function(response) {
+                console.log(response);
+                cached_data.tracks.items = cached_data.tracks.items.concat(response['items']);
+                cached_data.tracks.next = response.next;
+                playlistDetailPlaceholder.innerHTML = playlistDetailTemplate(cached_data);
+                $('textarea#output').val(csvTemplate(cached_data));
+            }
+        });
+    }
+});
+}//]]>  
+
+</script>
+
+
+</head>
+<body>
+      <h1>Spotify Playlist Export</h1>
+    <div class="container">
+    <div id="login">
+        <button id="login" class="btn btn-primary">Login with Spotify</button>
+    </div>
+    <div id="loggedin">
+        <div id="playlists">
+            <div id="playlists-list">
+            </div>
+            <div id="playlist-detail">
+            </div>
+        </div>
+        <div id="results"></div>
+    </div>
+  </div>
+
+<textarea id="output" style="display:none;"></textarea>
+
+<script id="playlists-list-template" type="text/x-handlebars-template">
+    <h3>Playlists</h3>
+    <ul>
+    {{#each}}
+        <li>
+            <a href="#" class="load" data-link="{{href}}">{{name}}</a>
+        </li>
+    {{/each}}
+    </ul>
+</script>
+
+<script id="playlist-detail-template" type="text/x-handlebars-template">
+    <h2>{{name}}</h2>
+    <div id="download">    <a href="javascript:save_csv();">Make CSV</a></div>
+    <p>{{{description}}}</p>
+    {{#if images.length}}
+    <img style="background-image:url({{images.0.url}})" class="cover"/>
+    {{/if}}
+    <table>
+        <tr>
+            <th>Track</th>
+            <th>Artist</th>
+            <th>Album</th>
+            <th>Date Added</th>
+        </tr>
+    {{#each tracks.items}}
+        <tr>
+            <td>{{track.name}}</td>
+            <td>
+                {{#each track.artists}}
+                    {{name}}
+                {{/each}}
+            </td>
+            <td>{{track.album.name}}</td>
+            <td>{{this.added_at}}</td>
+        </tr>
+    {{/each}}
+    </table>
+    {{#if tracks.next}}
+    <a href="#" class="load" data-link="{{tracks.next}}">More</a>
+    {{/if}}
+</script>
+
+<script id="csv-template" type="text/x-handlebars-template">Track,Artist,Album,AddedDate{{#each tracks.items}}
+"{{{track.name}}}","{{#each track.artists}}{{{name}}} {{/each}}","{{{track.album.name}}}","{{{this.added_at}}}"{{/each}}</script>
+
+<div>
+<BR><BR><BR><HR><BR>
+<p>For comments/suggestions, feel free to email me at: <a href="mailto:joel@cs.utexas.edu">joel@cs.utexas.edu</a>.</P>
+</div>
+</body>
+
+
+</html>
+
+
