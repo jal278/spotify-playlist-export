@@ -1,62 +1,62 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-  <title>Simple Playlist Exporter</title>
-  
-  
-  
-      <script type='text/javascript' src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
-    
-  
-    
-      <script type='text/javascript' src="http://cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
-   
-<script type="text/javascript" src="swfobject.js"></script>
-		<script type="text/javascript" src="downloadify.min.js"></script> 
-  
-    
-      <link rel="stylesheet" type="text/css" href="https://d2c87l0yth4zbw.cloudfront.net/css/80278a9.css">
-    
-  
-  <style type='text/css'>
-    body {
-    padding: 20px;
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>Simple Playlist Exporter</title>
+
+
+
+    <script type='text/javascript' src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+
+
+
+    <script type='text/javascript' src="http://cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
+
+    <script type="text/javascript" src="swfobject.js"></script>
+    <script type="text/javascript" src="downloadify.min.js"></script> 
+
+
+    <link rel="stylesheet" type="text/css" href="https://d2c87l0yth4zbw.cloudfront.net/css/80278a9.css">
+
+
+    <style type='text/css'>
+body {
+  padding: 20px;
 }
 
 #playlists-list {
-    width: 30%;
+  width: 30%;
 }
 
 #playlist-detail {
-    width: 65%;
+  width: 65%;
 }
 #playlist-detail, #playlists-list {
-    float: left;
+  float: left;
 }
 
 .cover {
-    width: 300px;
-    height: 300px;
-    background-size: cover;
+  width: 300px;
+  height: 300px;
+  background-size: cover;
 }
 
 td, th {
-    padding: 3px 10px;
+  padding: 3px 10px;
 }
 tr {
-    border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
 }
-  </style>
-  
+    </style>
 
 
-<script type='text/javascript'>//<![CDATA[ 
+
+    <script type='text/javascript'>//<![CDATA[ 
 
 
 var cached_data;
 function save_csv() {
- Downloadify.create("download",{
+  Downloadify.create("download",{
     swf:'downloadify.swf',
     downloadImage:'download.png', 
     width: 100,
@@ -65,177 +65,202 @@ function save_csv() {
     append: false,
     filename: 'playlist.csv',
     data: $("#output").val(),
-    });
+  });
 }
 
 window.onload=function(){
-// find template and compile it
-var playlistsListTemplateSource = document.getElementById('playlists-list-template').innerHTML,
-    playlistsListTemplate = Handlebars.compile(playlistsListTemplateSource),
+  // find template and compile it
+  var playlistsListTemplateSource = document.getElementById('playlists-list-template').innerHTML,
+  playlistsListTemplate = Handlebars.compile(playlistsListTemplateSource),
     playlistsListPlaceholder = document.getElementById('playlists-list'),
     csvTemplateSource= document.getElementById('csv-template').innerHTML,
-    csvTemplate = Handlebars.compile(csvTemplateSource),
-    
-    playlistDetailTemplateSource = document.getElementById('playlist-detail-template').innerHTML,
-    playlistDetailTemplate = Handlebars.compile(playlistDetailTemplateSource),
-    playlistDetailPlaceholder = document.getElementById('playlist-detail')
+      csvTemplate = Handlebars.compile(csvTemplateSource),
 
-document.getElementById('login').addEventListener('click', function() {
-    login();
-});
+      playlistDetailTemplateSource = document.getElementById('playlist-detail-template').innerHTML,
+        playlistDetailTemplate = Handlebars.compile(playlistDetailTemplateSource),
+        playlistDetailPlaceholder = document.getElementById('playlist-detail')
+
+          document.getElementById('login').addEventListener('click', function() {
+            login();
+          });
 
 
-function login() {
+  function login() {
     var width = 400,
-        height = 500;
+    height = 500;
     var left = (screen.width / 2) - (width / 2);
     var top = (screen.height / 2) - (height / 2);
-    
+
     var params = {
-        client_id:'1bef8ed75fcd45b08c250c232a79361a',
-        redirect_uri: 'http://joellehman.com/playlist/show.html',
-        scope: 'playlist-read playlist-read-private',
-        response_type: 'token'
+      client_id:'1bef8ed75fcd45b08c250c232a79361a',
+      redirect_uri: 'http://joellehman.com/playlist/show.html',
+      scope: 'playlist-read playlist-read-private',
+      response_type: 'token'
     };
     authWindow = window.open(
         "https://accounts.spotify.com/authorize?" + toQueryString(params),
         "Spotify",
         'menubar=no,location=no,resizable=no,scrollbars=no,status=no, width=' + width + ', height=' + height + ', top=' + top + ', left=' + left
-    );
-}
+        );
+  }
 
-function receiveMessage(event){
+  function receiveMessage(event){
     if (event.origin !== "http://joellehman.com") {
-        return;
+      return;
     }
     if (authWindow) {
-        authWindow.close();
+      authWindow.close();
     }
     showInfo(event.data);
-}
+  }
 
-window.addEventListener("message", receiveMessage, false);
+  window.addEventListener("message", receiveMessage, false);
 
-function toQueryString(obj) {
+  function toQueryString(obj) {
     var parts = [];
     for (var i in obj) {
-        if (obj.hasOwnProperty(i)) {
-            parts.push(encodeURIComponent(i) + "=" + encodeURIComponent(obj[i]));
-        }
+      if (obj.hasOwnProperty(i)) {
+        parts.push(encodeURIComponent(i) + "=" + encodeURIComponent(obj[i]));
+      }
     }
     return parts.join("&");
-}
-var authWindow = null;
+  }
+  var authWindow = null;
 
-var token = null;
+  var token = null;
 
 
-function showInfo(accessToken) {
+  function showInfo(accessToken) {
     token = accessToken;
     // fetch my public playlists
     $.ajax({
-        url: 'https://api.spotify.com/v1/me',
-        headers: {
+      url: 'https://api.spotify.com/v1/me',
+      headers: {
+        'Authorization': 'Bearer ' + accessToken
+      },
+      success: function(response) {         
+        var user_id = response.id.toLowerCase();         
+        $.ajax({
+          url: 'https://api.spotify.com/v1/users/' + user_id + '/playlists',
+          headers: {
             'Authorization': 'Bearer ' + accessToken
-        },
-        success: function(response) {         
-            var user_id = response.id.toLowerCase();         
-            $.ajax({
-                url: 'https://api.spotify.com/v1/users/' + user_id + '/playlists',
-                headers: {
-                    'Authorization': 'Bearer ' + accessToken
-                },
-                success: function(response) {
-                    console.log("RESPONSE:"+JSON.stringify(response.items));
+          },
+          success: function(response) {
+            console.log("RESPONSE:"+JSON.stringify(response.items));
 
-                     //temp fix for strange null hrefs on items
-                     for (var item in response.items) {
-                       item=response.items[item]; 
-                       console.log(JSON.stringify(item));
-                       item['href']=item['tracks']['href'].slice(0,-6)
-                     }
- 
-                    playlistsListPlaceholder.innerHTML = playlistsListTemplate(response.items);
-                }
-            });
-         
-            $('div#login').hide();
-            $('div#loggedin').show();
-        }
+            //temp fix for strange null hrefs on items
+
+            extractPlaylists(response, accessToken);
+          }
+        });
+
+        $('div#login').hide();
+        $('div#loggedin').show();
+      }
     });
-}
+  }
+  var allPlaylists = [];
+  function updatePlaylists(playlists) {
+    allPlaylists = allPlaylists.concat(playlists);
+    playlistsListPlaceholder.innerHTML = playlistsListTemplate(allPlaylists);
+  }
 
-playlistsListPlaceholder.addEventListener('click', function(e) {
+  function extractPlaylists(response, accessToken) {
+    var playlists = [];
+    var current_page = response;
+    for (var item in current_page.items) {
+      item=current_page.items[item]; 
+      console.log(JSON.stringify(item));
+      item['href']=item['tracks']['href'].slice(0,-6);
+      playlists.push(item);
+    }
+    var link = current_page.next;
+    if (link != null) {
+      $.ajax({
+        url: link,
+        headers: {
+          'Authorization': 'Bearer ' + accessToken
+        },
+        success: function(response) {
+          console.log("RESPONSE:"+JSON.stringify(response.items));
+          extractPlaylists(response, accessToken);
+        }
+      });
+    }
+    updatePlaylists(playlists);
+  }
+
+  playlistsListPlaceholder.addEventListener('click', function(e) {
     var target = e.target;
     if (target !== null && target.classList.contains('load')) {
-        e.preventDefault();
-        var link = target.getAttribute('data-link');
-               
-        $.ajax({
-            url: link,
-            headers: {
-                'Authorization': 'Bearer ' + token
-            },
-            success: function(response) {
-                console.log(response);
-                cached_data=response;
-                playlistDetailPlaceholder.innerHTML = playlistDetailTemplate(response);
-                $('textarea#output').val(csvTemplate(response));
-            }
-        });
-    }
-});
+      e.preventDefault();
+      var link = target.getAttribute('data-link');
 
-playlistDetailPlaceholder.addEventListener('click', function(e) {
+      $.ajax({
+        url: link,
+        headers: {
+          'Authorization': 'Bearer ' + token
+        },
+        success: function(response) {
+          console.log(response);
+          cached_data=response;
+          playlistDetailPlaceholder.innerHTML = playlistDetailTemplate(response);
+          $('textarea#output').val(csvTemplate(response));
+        }
+      });
+    }
+  });
+
+  playlistDetailPlaceholder.addEventListener('click', function(e) {
     var target = e.target;
     if (target !== null && target.classList.contains('load')) {
-        e.preventDefault();
-        var link = target.getAttribute('data-link');
-               
-        $.ajax({
-            url: link,
-            headers: {
-                'Authorization': 'Bearer ' + token
-            },
-            success: function(response) {
-                console.log(response);
-                cached_data.tracks.items = cached_data.tracks.items.concat(response['items']);
-                cached_data.tracks.next = response.next;
-                playlistDetailPlaceholder.innerHTML = playlistDetailTemplate(cached_data);
-                $('textarea#output').val(csvTemplate(cached_data));
-            }
-        });
+      e.preventDefault();
+      var link = target.getAttribute('data-link');
+
+      $.ajax({
+        url: link,
+        headers: {
+          'Authorization': 'Bearer ' + token
+        },
+        success: function(response) {
+          console.log(response);
+          cached_data.tracks.items = cached_data.tracks.items.concat(response['items']);
+          cached_data.tracks.next = response.next;
+          playlistDetailPlaceholder.innerHTML = playlistDetailTemplate(cached_data);
+          $('textarea#output').val(csvTemplate(cached_data));
+        }
+      });
     }
-});
+  });
 }//]]>  
 
-</script>
+    </script>
 
 
-</head>
-<body>
-<a href="https://github.com/jal278/spotify-playlist-export"><img style="position: absolute; top: 0; left: 0; border: 0;" src="https://camo.githubusercontent.com/567c3a48d796e2fc06ea80409cc9dd82bf714434/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f6c6566745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_left_darkblue_121621.png"></a>
+  </head>
+  <body>
+    <a href="https://github.com/jal278/spotify-playlist-export"><img style="position: absolute; top: 0; left: 0; border: 0;" src="https://camo.githubusercontent.com/567c3a48d796e2fc06ea80409cc9dd82bf714434/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f6c6566745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_left_darkblue_121621.png"></a>
 
-<br><br>  <center>    <h1>Spotify Playlist Export</h1></center>
+    <br><br>  <center>    <h1>Spotify Playlist Export</h1></center>
     <div class="container">
-    <div id="login">
+      <div id="login">
         <button id="login" class="btn btn-primary">Login with Spotify</button>
-    </div>
-    <div id="loggedin">
+      </div>
+      <div id="loggedin">
         <div id="playlists">
-            <div id="playlists-list">
-            </div>
-            <div id="playlist-detail">
-            </div>
+          <div id="playlists-list">
+          </div>
+          <div id="playlist-detail">
+          </div>
         </div>
         <div id="results"></div>
+      </div>
     </div>
-  </div>
 
-<textarea id="output" style="display:none;"></textarea>
+    <textarea id="output" style="display:none;"></textarea>
 
-<script id="playlists-list-template" type="text/x-handlebars-template">
-    <h3>Playlists</h3>
+    <script id="playlists-list-template" type="text/x-handlebars-template">
+<h3>Playlists</h3>
     <ul>
     {{#each}}
         <li>
@@ -243,10 +268,10 @@ playlistDetailPlaceholder.addEventListener('click', function(e) {
         </li>
     {{/each}}
     </ul>
-</script>
+    </script>
 
-<script id="playlist-detail-template" type="text/x-handlebars-template">
-    <h2>{{name}}</h2>
+    <script id="playlist-detail-template" type="text/x-handlebars-template">
+<h2>{{name}}</h2>
     <div id="download">    <a href="javascript:save_csv();">Make CSV</a></div>
     <p>{{{description}}}</p>
     {{#if images.length}}
@@ -275,16 +300,16 @@ playlistDetailPlaceholder.addEventListener('click', function(e) {
     {{#if tracks.next}}
     <a href="#" class="load" data-link="{{tracks.next}}">More</a>
     {{/if}}
-</script>
+    </script>
 
-<script id="csv-template" type="text/x-handlebars-template">Track,Artist,Album,AddedDate{{#each tracks.items}}
+    <script id="csv-template" type="text/x-handlebars-template">Track,Artist,Album,AddedDate{{#each tracks.items}}
 "{{{track.name}}}","{{#each track.artists}}{{{name}}} {{/each}}","{{{track.album.name}}}","{{{this.added_at}}}"{{/each}}</script>
 
-<div>
-<BR><BR><BR><HR><BR>
-<p>For comments/suggestions, feel free to email me at: <a href="mailto:joel@cs.utexas.edu">joel@cs.utexas.edu</a>.</P>
-</div>
-</body>
+    <div>
+      <BR><BR><BR><HR><BR>
+      <p>For comments/suggestions, feel free to email me at: <a href="mailto:joel@cs.utexas.edu">joel@cs.utexas.edu</a>.</P>
+    </div>
+  </body>
 
 
 </html>
